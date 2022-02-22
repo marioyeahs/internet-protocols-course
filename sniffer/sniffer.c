@@ -14,7 +14,6 @@ void get_data(int, char[5]);
 void ProcessPacket(unsigned char *buffer, int size);
 void print_ethernet_header(unsigned char *Buffer, int Size);
 
-
 FILE *logfile;
 unsigned MAC[6], MASK[6], IP[4];
 int len, total; //tamaño del buffer
@@ -24,12 +23,13 @@ int main()
 
     int socket_fd;
     //unsigned char packet_buffer[MAXBUFF]; // buffer para almacenar paquetes
-    unsigned char *packet_buffer = (unsigned char *)malloc(65536); //Its Big!
+    unsigned char *packet_buffer = (unsigned char *)malloc(MAXBUFF); //Its Big!
+    char command_buffer[100];
     int len;
-    char name[6];                                                       //package len
+    char name[6];
     //ifconfig enp2s0 -promisc
     printf("\nNIC name:");
-    scanf("%s",name);
+    scanf("%s", name);
     //char name[6] = "wlp1s0";
     struct ifreq eth_req;
     struct sockaddr_ll sll;
@@ -102,9 +102,9 @@ int main()
 
         int packets_to_sniff;
         printf("\n# packages? ");
-        scanf("%d",&packets_to_sniff);
+        scanf("%d", &packets_to_sniff);
         //captura de paquetes
-        while (packets_to_sniff !=0)
+        while (packets_to_sniff != 0)
         {
             if (len = recvfrom(socket_fd, packet_buffer, MAXBUFF, 0, (struct sockaddr *)&packet_info, &packet_info_size) == -1)
             {
@@ -114,13 +114,18 @@ int main()
             else
             {
                 struct ethhdr *data;
-                ProcessPacket(packet_buffer, len);
+                print_ethernet_header(packet_buffer, len);
                 --packets_to_sniff;
                 printf("\nReceiving packets...");
             }
         }
     }
     close(socket_fd);
+    // printf("\nName:%s",name);
+    // snprintf(command_buffer,sizeof(command_buffer),"/sbin/ifconfig %s -promisc", name);
+    // printf("\ncommand: %s\n", name);
+    system("/sbin/ifconfig wlp1s0 -promisc");
+    printf("\nDone!!");
     return 0;
 }
 
@@ -142,25 +147,23 @@ void get_data(int sfd, char name[])
     }
 }
 
-void ProcessPacket(unsigned char *buffer, int size)
-{
-    //Get the IP Header part of this packet , excluding the ethernet header
-    struct iphdr *iph = (struct iphdr *)(buffer + sizeof(struct ethhdr));
-    ++total;
-    print_ethernet_header(buffer, size);
-
-    printf("Total: %d\r", total);
-}
-
 void print_ethernet_header(unsigned char *Buffer, int Size)
 {
     struct ethhdr *eth = (struct ethhdr *)Buffer;
-
-    fprintf(logfile, "\n");
-    fprintf(logfile, "Ethernet Header\n");
-    fprintf(logfile, "   |-Destination Address : %.2X-%.2X-%.2X-%.2X-%.2X-%.2X \n", eth->h_dest[0], eth->h_dest[1], eth->h_dest[2], eth->h_dest[3], eth->h_dest[4], eth->h_dest[5]);
-    fprintf(logfile, "   |-Source Address      : %.2X-%.2X-%.2X-%.2X-%.2X-%.2X \n", eth->h_source[0], eth->h_source[1], eth->h_source[2], eth->h_source[3], eth->h_source[4], eth->h_source[5]);
-    fprintf(logfile, "   |-Protocolo            : %.2X \n", eth->h_proto); //solo aceptar trama Ethernet II (>=0x0600) >1536, asume protocolo
+    unsigned int eth2 = 0x0600;
+    if (eth->h_proto > eth2)
+    {
+        printf("\n------------This is an Ethernet II frame!!");
+        fprintf(logfile, "\n");
+        fprintf(logfile, "Ethernet Header\n");
+        fprintf(logfile, "   |-Destination Address : %.2X-%.2X-%.2X-%.2X-%.2X-%.2X \n", eth->h_dest[0], eth->h_dest[1], eth->h_dest[2], eth->h_dest[3], eth->h_dest[4], eth->h_dest[5]);
+        fprintf(logfile, "   |-Source Address      : %.2X-%.2X-%.2X-%.2X-%.2X-%.2X \n", eth->h_source[0], eth->h_source[1], eth->h_source[2], eth->h_source[3], eth->h_source[4], eth->h_source[5]);
+        fprintf(logfile, "   |-Protocolo            : %X \n", eth->h_proto); //solo aceptar trama Ethernet II (>=0x0600) >1536, asume protocolo
+    }else{
+        printf("\nThis is an IEEE 802.3 frame");
+    }
+    ++total;
+    printf("Total: %d\r", total);
 }
 
 // void print_ip_header(unsigned char* Buffer, int Size)

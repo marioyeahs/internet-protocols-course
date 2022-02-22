@@ -16,7 +16,7 @@ void print_ethernet_header(unsigned char *Buffer, int Size);
 
 FILE *logfile;
 unsigned MAC[6], MASK[6], IP[4];
-int len, total; //tamaño del buffer
+int len, total_eth2,total,total_ieee,ipv4,ipv6,arp,sct,mac; //tamaño del buffer
 
 int main()
 {
@@ -119,6 +119,14 @@ int main()
                 printf("\nReceiving packets...");
             }
         }
+        fprintf(logfile, "\nTotal packets tracked: %d",total);
+        fprintf(logfile, "\nTotal  Ethernet II packets tracked: %d",total_eth2);
+        fprintf(logfile, "\nTotal IEEE 802.3 Packets tracked: %d",total_ieee);
+        fprintf(logfile, "\nTotal frames with IPv4 protocol: %d",ipv4);
+        fprintf(logfile, "\nTotal frames with IPv6 protocol: %d",ipv6);
+        fprintf(logfile, "\nTotal frames with SCT protocol: %d",sct);
+        fprintf(logfile, "\nTotal frames with MACsecurity protocol: %d",mac);
+
         fclose(logfile);
     }
     close(socket_fd);
@@ -156,26 +164,33 @@ void print_ethernet_header(unsigned char *Buffer, int Size)
     {
         if(eth->h_proto==0x800){
             printf("\nFrame with IPv4 protocol");
+            ++ipv4;
         }else if(eth->h_proto==0x86DD){
             printf("\nFrame with IPv6 protocol");
+            ++ipv6;
         }else if(eth->h_proto==0x0806){
+            ++arp;
             printf("\nFrame with ARP protocol");
         }else if(eth->h_proto==0x8808){
+            sct++;
             printf("\nFrame with Stream Control Transmission protocol");
         }else if(eth->h_proto==0x88E5){
+            ++mac;
             printf("\nFrame with MACsec protocol");
         }
         printf("\n------------This is an Ethernet II frame!!");
+        ++total_eth2;
+        printf(": #%d\r", total);
         fprintf(logfile, "\n");
         fprintf(logfile, "Ethernet Header\n");
         fprintf(logfile, "   |-Destination Address : %.2X-%.2X-%.2X-%.2X-%.2X-%.2X \n", eth->h_dest[0], eth->h_dest[1], eth->h_dest[2], eth->h_dest[3], eth->h_dest[4], eth->h_dest[5]);
         fprintf(logfile, "   |-Source Address      : %.2X-%.2X-%.2X-%.2X-%.2X-%.2X \n", eth->h_source[0], eth->h_source[1], eth->h_source[2], eth->h_source[3], eth->h_source[4], eth->h_source[5]);
         fprintf(logfile, "   |-Protocolo            : %X \n", eth->h_proto); //solo aceptar trama Ethernet II (>=0x0600) >1536, asume protocolo
     }else{
+        ++total_ieee;
         printf("\nThis is an IEEE 802.3 frame");
     }
     ++total;
-    printf("Total: %d\r", total);
 }
 
 // void print_ip_header(unsigned char* Buffer, int Size)

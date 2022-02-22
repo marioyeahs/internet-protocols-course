@@ -119,6 +119,7 @@ int main()
                 printf("\nReceiving packets...");
             }
         }
+        fclose(logfile);
     }
     close(socket_fd);
     // printf("\nName:%s",name);
@@ -153,6 +154,17 @@ void print_ethernet_header(unsigned char *Buffer, int Size)
     unsigned int eth2 = 0x0600;
     if (eth->h_proto > eth2)
     {
+        if(eth->h_proto==0x800){
+            printf("\nFrame with IPv4 protocol");
+        }else if(eth->h_proto==0x86DD){
+            printf("\nFrame with IPv6 protocol");
+        }else if(eth->h_proto==0x0806){
+            printf("\nFrame with ARP protocol");
+        }else if(eth->h_proto==0x8808){
+            printf("\nFrame with Stream Control Transmission protocol");
+        }else if(eth->h_proto==0x88E5){
+            printf("\nFrame with MACsec protocol");
+        }
         printf("\n------------This is an Ethernet II frame!!");
         fprintf(logfile, "\n");
         fprintf(logfile, "Ethernet Header\n");

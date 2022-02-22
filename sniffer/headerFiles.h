@@ -14,3 +14,4 @@
 #include <net/if.h>
 #include <sys/ioctl.h>
 #include <net/ethernet.h>
+#include <netinet/if_ether.h>	//For ETH_P_ALL

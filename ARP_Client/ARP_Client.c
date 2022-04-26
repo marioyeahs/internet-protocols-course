@@ -32,7 +32,8 @@ struct {
     unsigned char destinoIP[4];         /*Dirección IP del receptor (dato de entrada), la queremos consultar*/
 } msgARP;
 
-
+// Como datos de entrada al programa se le proporcionará el número de direcciones a resolver, así como las direcciones IP 
+// correspondientes, y como salida se desplegarán las direcciones MAC asociadas a dichas direcciones IP.
 
 int main (int argc, char **arg){
     sfd = socket (PF_INET, SOCK_PACKET, ETH_P_ARP);
